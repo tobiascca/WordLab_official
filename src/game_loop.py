@@ -1,40 +1,63 @@
-import pygame
-import sys
-import random
-from words import *
-from PyDictionary import PyDictionary
-dictionary = PyDictionary()
+import pygame   # Main library that helps with GUI
+import sys      # Library that allows accesing files
+import random   # Library that randomizes selection
+from words import *     # Python file containing words available
+from PyDictionary import PyDictionary   # Library that retrieves the definition of the words
+dictionary = PyDictionary()     # Initializing the function that retrieves definitions
 
+# Initializes pygame library
 pygame.init()
 
 # Constants
 
+# Dimensions of the window
 WIDTH, HEIGHT = 600, 800
 
+# Title of the window
+pygame.display.set_caption('WordLab')
+
+# Set up icon of window
+ICON = pygame.image.load("assets/Icon.png")
+pygame.display.set_icon(ICON)
+
+# Loads sound effect when entering keys and pressing buttons
+keys_sound_effect = pygame.mixer.Sound("assets/Tick.mp3")
+keys_sound_effect.set_volume(0.6)
+
+# Load music
+music = pygame.mixer.music.load("assets/music.mp3")
+
+# Sets the screen dimensions
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
+
 # Start Game Background
 PLAY_BACKGROUND = pygame.image.load("assets/START_GAME.png")
 PLAY_BACKGROUND_RECT = PLAY_BACKGROUND.get_rect(center=(WIDTH/2, HEIGHT/2))
 
+# Color definitions
 GREEN = "#6aaa64"
 YELLOW = "#c9b458"
 GREY = "#787c7e"
 OUTLINE = "#d3d6da"
 FILLED_OUTLINE = "#878a8c"
 
-CORRECT_WORD = random.choice(WORDS)
+# Selects a random word from a selected array that is used for testing
+CORRECT_WORD = random.choice(CORRECT_WORDS)
 
+# Array containing alphabet
 ALPHABET = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"]
 
+# Assigns fonts
 GUESSED_LETTER_FONT = pygame.font.Font("assets/FreeSansBold.otf", 50)
 AVAILABLE_LETTER_FONT = pygame.font.Font("assets/FreeSansBold.otf", 25)
 
+# Fills screen with color and background
 screen.fill("white")
 screen.blit(PLAY_BACKGROUND, PLAY_BACKGROUND_RECT)
 pygame.display.update()
 
-LETTER_X_SPACING = 75
-LETTER_Y_SPACING = 22
+LETTER_X_SPACING = 76.1
+LETTER_Y_SPACING = 22.2
 LETTER_SIZE = 70
 
 # Global variables
@@ -52,8 +75,9 @@ current_letter_bg_x = 110
 # Indicators is a list storing all the Indicator object. An indicator is that button thing with all the letters you see.
 indicators = []
 
-game_result = ""
+game_result = ""    # Initializing the game result variable
 
+# Class to create letters
 class Letter:
     def __init__(self, text, bg_position):
         # Initializes all the variables, including text, color, position, size, etc.
@@ -83,6 +107,7 @@ class Letter:
         pygame.draw.rect(screen, OUTLINE, self.bg_rect, 3)
         pygame.display.update()
 
+# Class to draw the keys down the grid as indicators
 class Indicator:
     def __init__(self, x, y, letter):
         # Initializes variables such as color, size, position, and letter.
@@ -162,29 +187,60 @@ def check_guess(guess_to_check):
     if guesses_count == 6 and game_result == "":
         game_result = "L"
 
+def wrap_text(text, font, max_width):
+    words = text.split()
+    lines = []
+    current_line = []
+    current_width = 0
+
+    for word in words:
+        word_width, _ = font.size(word + ' ')
+        if current_width + word_width > max_width:
+            lines.append(' '.join(current_line))
+            current_line = [word]
+            current_width = word_width
+        else:
+            current_line.append(word)
+            current_width += word_width
+
+    lines.append(' '.join(current_line))
+    return lines
+
+
 def play_again():
     # Puts the play again text on the screen.
-    screen.fill("white")
+    screen.fill(color=(255, 235, 210))
 
     global meaning
     meaning = dictionary.meaning(CORRECT_WORD)
+    meaning_text = " ".join([f"{part}: {', '.join(defs)}" for part, defs in meaning.items()])
 
     play_again_font = pygame.font.Font("assets/FreeSansBold.otf", 40)
     play_again_text = play_again_font.render("Press ENTER to Play Again!", True, "black")
     play_again_rect = play_again_text.get_rect(center=(WIDTH/2, 700))
     word_was_text = play_again_font.render(f"The word was {CORRECT_WORD}!", True, "black")
-    word_was_rect = word_was_text.get_rect(center=(WIDTH/2, 650))
+    word_was_rect = word_was_text.get_rect(center=(WIDTH/2, 150))
 
-    play_again_font = pygame.font.Font("assets/FreeSansBold.otf", 20)
-    meaning_text = play_again_font.render(f"The definition of this word is: {meaning}", False, "black")
-    meaning_height = meaning_text.get_height()  # Get the meaning text height
+    def_font = pygame.font.Font("assets/FreeSansBold.otf", 20)
+    def_text = def_font.render(f"The definition of this word is:", True, "black")
+    def_rect = def_text.get_rect(center=(WIDTH/2, 250))
 
-    # Adjust meaning rectangle y-coordinate if needed
-    max_meaning_y = HEIGHT - meaning_height - 50  # Buffer of 50px from bottom
-    meaning_rect_y = min(200, max_meaning_y)  # Choose between 200 and max allowed y
-    meaning_rect = meaning_text.get_rect(center=(WIDTH/2, meaning_rect_y))
+    meaning_font = pygame.font.Font("assets/FreeSansBold.otf", 20)
+    max_width = WIDTH - 20  # Adjust the width to fit within the screen
+    wrapped_lines = wrap_text(meaning_text, meaning_font, max_width)
+    line_height = meaning_font.get_height()
+    max_height = HEIGHT - 300  # Adjust the height to fit within the screen
+    y_offset = 300  # Start rendering from y=300
 
-    screen.blit(meaning_text, meaning_rect)
+    for i, line in enumerate(wrapped_lines):
+        if y_offset + line_height > max_height:
+            break  # Stop rendering if we reach the maximum height
+        meaning_text_surface = meaning_font.render(line, True, "black")
+        meaning_rect = meaning_text_surface.get_rect(center=(WIDTH/2, y_offset))
+        screen.blit(meaning_text_surface, meaning_rect)
+        y_offset += line_height
+
+    screen.blit(def_text, def_rect)
     screen.blit(word_was_text, word_was_rect)
     screen.blit(play_again_text, play_again_rect)
     pygame.display.update()
@@ -195,7 +251,7 @@ def reset():
     screen.fill("white")
     screen.blit(PLAY_BACKGROUND, PLAY_BACKGROUND_RECT)
     guesses_count = 0
-    CORRECT_WORD = random.choice(WORDS)
+    CORRECT_WORD = random.choice(CORRECT_WORDS)
     guesses = [[]] * 6
     current_guess = []
     current_guess_string = ""
@@ -206,12 +262,13 @@ def reset():
         indicator.draw()
 
 def create_new_letter(key_pressed):
+    keys_sound_effect.play()
     # Creates a new letter and adds it to the guess.
     global current_guess_string, current_letter_bg_x
     current_guess_string += key_pressed
     # Initial Y position for start drawing rows
-    first_row_y = 70
-    new_letter = Letter(key_pressed, (current_letter_bg_x, first_row_y + guesses_count * 80 + LETTER_Y_SPACING))
+    first_row_y = 56.8
+    new_letter = Letter(key_pressed, (current_letter_bg_x, first_row_y + guesses_count * 88 + LETTER_Y_SPACING))
     current_letter_bg_x += LETTER_X_SPACING
     guesses[guesses_count].append(new_letter)
     current_guess.append(new_letter)
@@ -229,6 +286,9 @@ def delete_letter():
     current_letter_bg_x -= LETTER_X_SPACING
 
 def GameLoop():
+    # Function to keep the game running
+    # Play music indefinitely
+    pygame.mixer.music.play(loops=-1)
     while True:
         if game_result != "":
             play_again()
@@ -250,7 +310,6 @@ def GameLoop():
                     key_pressed = event.unicode.upper()
                     if key_pressed in "QWERTYUIOPASDFGHJKLZXCVBNM" and key_pressed != "":
                         if len(current_guess_string) < 5:
-                            create_new_letter(key_pressed)
+                            create_new_letter(key_pressed)  
 
 GameLoop()
-                            

@@ -1,4 +1,21 @@
+CORRECT_WORDS = [
+    "naval",
+    "colon",
+    "cigar",
+    "focal",
+    "hello",
+    "plant",
+    "great",
+    "giant",
+    "prize",
+    "model",
+    "death",
+    "crown"
+]
+
 WORDS = [
+"plays",
+"nails",
 "cigar",
 "awake",
 "blush",
@@ -94,7 +111,6 @@ WORDS = [
 "civic",
 "forge",
 "corny",
-"moult",
 "basic",
 "salad",
 "agate",
