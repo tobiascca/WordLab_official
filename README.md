@@ -18,6 +18,10 @@ git clone https://github.com/yourusername/your-repo-name.git
 ```sh
 cd your-repo-name
 ```
+3. Install the required dependencies:
+```sh
+pip install -r requirements.txt
+```
 
 ## Usage
 To start the game, run the main.py file:
